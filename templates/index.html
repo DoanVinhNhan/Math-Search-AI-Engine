@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Research Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- CẤU HÌNH MATHJAX -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #131314; color: #E3E3E3; }
+        .gemini-gradient {
+            background: linear-gradient(74deg, #4285F4 0, #9B72CB 9%, #D96570 20%, #D96570 24%, #9B72CB 35%, #4285F4 44%, #9B72CB 50%, #D96570 56%, #131314 75%, #131314 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 400% 100%;
+            animation: gradient-anim 10s ease-in-out infinite;
+        }
+        @keyframes gradient-anim { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+        
+        /* Markdown Styles */
+        .prose h3 { font-size: 1.2rem; font-weight: 600; color: #a5b4fc; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        .prose h4 { font-size: 1.05rem; font-weight: 500; color: #818cf8; margin-top: 1rem; }
+        .prose p { margin-bottom: 0.5rem; line-height: 1.6; color: #d1d5db; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; color: #9ca3af; }
+        .prose a { color: #60a5fa; text-decoration: none; border-bottom: 1px dashed #60a5fa; }
+        
+        .process-step { border-left: 2px solid #374151; padding-left: 10px; margin-bottom: 4px; opacity: 0.7; transition: opacity 0.3s; }
+        .process-step.active { border-color: #60a5fa; opacity: 1; color: #93c5fd; }
+        .process-step.done { border-color: #10b981; color: #34d399; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #444746; border-radius: 4px; }
+
+        /* Settings Panel Animation */
+        #settings-panel { transition: all 0.2s ease-out; transform-origin: bottom right; }
+        .settings-open { transform: scale(1); opacity: 1; pointer-events: auto; }
+        .settings-closed { transform: scale(0.95); opacity: 0; pointer-events: none; }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <!-- Sidebar (Giữ nguyên) -->
+    <aside id="sidebar" class="bg-[#1E1F20] w-72 flex-shrink-0 flex flex-col h-full absolute md:relative z-20 transform -translate-x-full md:translate-x-0 border-r border-gray-700/30 transition-transform duration-300">
+        <div class="p-4 flex items-center justify-between">
+            <button onclick="toggleSidebar()" class="p-2 hover:bg-[#333537] rounded-full text-gray-400 md:hidden">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <div class="bg-[#282A2C] px-3 py-1 rounded-full text-xs font-medium text-gray-300 border border-gray-600">Mảng HT & NCKH</div>
+        </div>
+        <div onclick="createNewChat()" class="mx-4 mt-2 mb-6 bg-[#1A1A1C] hover:bg-[#28292C] text-[#E3E3E3] py-2.5 px-4 rounded-full flex items-center gap-3 cursor-pointer transition-colors border border-gray-700/50">
+            <i data-lucide="plus" class="w-5 h-5 text-gray-400"></i>
+            <span class="text-sm font-medium">Cuộc hội thoại mới</span>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4">
+            <div class="text-xs font-medium text-gray-400 mb-2 px-2">Lịch sử</div>
+            <ul class="space-y-1" id="history-list"></ul>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col relative h-full w-full bg-[#131314]">
+        <!-- Mobile Header -->
+        <div class="p-4 flex items-center justify-between md:hidden absolute top-0 left-0 right-0 z-10 bg-[#131314]/90 backdrop-blur">
+            <button onclick="toggleSidebar()" class="p-2 -ml-2 text-gray-400"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            <span class="text-lg font-medium text-gray-200">Math AI</span>
+        </div>
+
+        <div id="chat-container" class="flex-1 overflow-y-auto pt-16 md:pt-10 px-4 pb-40 scroll-smooth">
+            <div id="greeting-area" class="max-w-3xl mx-auto mt-10 md:mt-20 space-y-8">
+                <div class="space-y-2">
+                    <h1 class="text-5xl md:text-6xl font-medium gemini-gradient tracking-tight">Xin chào,</h1>
+                    <h2 class="text-4xl md:text-5xl font-medium text-[#444746]">Hệ thống đã sẵn sàng tìm kiếm.</h2>
+                </div>
+            </div>
+            <div id="messages" class="max-w-3xl mx-auto space-y-6 hidden"></div>
+        </div>
+
+        <!-- Input Area & Settings -->
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#131314] via-[#131314] to-transparent pt-10 pb-6 px-4">
+            <div class="max-w-3xl mx-auto relative">
+                
+                <!-- SETTINGS PANEL POPUP -->
+                <div id="settings-panel" class="absolute bottom-full right-0 mb-4 bg-[#1E1F20] border border-gray-700 rounded-2xl p-4 w-72 shadow-2xl settings-closed z-50">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-semibold text-gray-300">Cấu hình tìm kiếm</h3>
+                        <button onclick="toggleSettings()" class="text-gray-500 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Số lượng Queries (1-10)</label>
+                            <input type="range" id="setting-queries" min="1" max="10" value="3" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>1</span>
+                                <span id="val-queries" class="text-blue-400 font-bold">3</span>
+                                <span>10</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Kết quả mỗi Query (1-10)</label>
+                            <input type="range" id="setting-results" min="1" max="10" value="3" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>1</span>
+                                <span id="val-results" class="text-purple-400 font-bold">3</span>
+                                <span>10</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Box -->
+                <div class="bg-[#1E1F20] rounded-[28px] flex flex-col border border-gray-700/50 focus-within:bg-[#28292C] focus-within:border-gray-500 transition-colors">
+                    <div class="flex items-end gap-2 px-4 py-3">
+                        <!-- Settings Toggle Button -->
+                        <button onclick="toggleSettings()" class="p-2 text-gray-400 hover:text-gray-200 hover:bg-[#333537] rounded-full transition-colors mb-0.5" title="Cài đặt tìm kiếm">
+                            <i data-lucide="settings-2" class="w-5 h-5"></i>
+                        </button>
+                        
+                        <textarea id="user-input" rows="1" placeholder="Nhập yêu cầu tìm kiếm toán học..." class="w-full bg-transparent text-gray-100 placeholder-gray-500 focus:outline-none resize-none py-2 max-h-[200px]" oninput="autoResize(this)" onkeydown="handleKeyDown(event)"></textarea>
+                        
+                        <button onclick="sendMessage()" id="send-btn" class="p-2 text-gray-500 cursor-not-allowed rounded-full hover:bg-[#333537] transition-colors" disabled>
+                            <i data-lucide="send-horizontal" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-center mt-3 text-xs text-gray-500">@Powered by Gemini & Google Custom Search</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        
+        // --- UI STATES ---
+        const settingsPanel = document.getElementById('settings-panel');
+        const qRange = document.getElementById('setting-queries');
+        const rRange = document.getElementById('setting-results');
+        const qVal = document.getElementById('val-queries');
+        const rVal = document.getElementById('val-results');
+
+        // Update range value displays
+        qRange.addEventListener('input', (e) => qVal.innerText = e.target.value);
+        rRange.addEventListener('input', (e) => rVal.innerText = e.target.value);
+
+        function toggleSettings() {
+            if (settingsPanel.classList.contains('settings-closed')) {
+                settingsPanel.classList.remove('settings-closed');
+                settingsPanel.classList.add('settings-open');
+            } else {
+                settingsPanel.classList.remove('settings-open');
+                settingsPanel.classList.add('settings-closed');
+            }
+        }
+
+        // --- LATEX RENDERING V3.0 (AUTO-FIXER) ---
+        function renderMarkdownWithLatexProtection(text) {
+            
+            // --- GIAI ĐOẠN 1: SƠ CỨU DỮ LIỆU (FIX BROKEN LATEX) ---
+            
+            // 1. Sửa lỗi mất dấu gạch chéo cho các lệnh thông dụng
+            // Ví dụ: "beginpmatrix" -> "\begin{pmatrix}", "mathbb" -> "\mathbb"
+            const commonCommands = [
+                'begin', 'end', 'frac', 'mathbb', 'mathcal', 'mathrm', 
+                'rightarrow', 'leftarrow', 'leftrightarrow', 'Rightarrow', 
+                'sum', 'int', 'prod', 'lim', 'infty', 'times', 'cdot', 
+                'alpha', 'beta', 'gamma', 'theta', 'lambda', 'sigma', 'omega'
+            ];
+            
+            commonCommands.forEach(cmd => {
+                // Regex tìm từ khóa không có dấu \ đằng trước
+                const regex = new RegExp(`(?<!\\\\)\\b${cmd}\\b`, 'g');
+                text = text.replace(regex, `\\${cmd}`);
+            });
+
+            // 2. Sửa lỗi cụ thể từ hình ảnh
+            text = text.replace(/\\imes/g, '\\times'); // Sửa lỗi 4\imes4
+            text = text.replace(/\\begin\s*\{/g, '\\begin{'); // Chuẩn hóa space
+            text = text.replace(/\\end\s*\{/g, '\\end{');
+
+
+            // --- GIAI ĐOẠN 2: BÓC TÁCH NESTED LATEX (TEXT TRONG MATH MODE) ---
+            text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
+                
+                const hasInnerMath = /[^\\]\$/.test(content);
+                const isTooLongText = content.length > 50 && (content.match(/\\/g) || []).length < 3;
+
+                if (hasInnerMath || isTooLongText) {
+                    return content; // Trả về nội dung thô (để Markdown render text, MathJax render $...$)
+                }
+                return match; // Giữ nguyên nếu là block math chuẩn
+            });
+
+
+            // --- GIAI ĐOẠN 3: BẢO VỆ LATEX TRƯỚC KHI PARSE MARKDOWN ---
+            
+            const mathBlocks = [];
+            const inlineBlocks = [];
+            
+            // Bảo vệ $$...$$ (Dùng placeholder an toàn không chứa ký tự đặc biệt)
+            text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
+                mathBlocks.push(match);
+                return `MATHBLOCK${mathBlocks.length - 1}ENDMATHBLOCK`; 
+            });
+
+            // Bảo vệ $...$
+            text = text.replace(/\$([^\n\r]+?)\$/g, (match) => {
+                inlineBlocks.push(match);
+                return `MATHINLINE${inlineBlocks.length - 1}ENDMATHINLINE`;
+            });
+
+
+            // --- GIAI ĐOẠN 4: RENDER MARKDOWN ---
+            let html = marked.parse(text);
+
+
+            // --- GIAI ĐOẠN 5: KHÔI PHỤC LATEX ---
+            
+            html = html.replace(/MATHBLOCK(\d+)ENDMATHBLOCK/g, (match, id) => {
+                return mathBlocks[parseInt(id)];
+            });
+
+            html = html.replace(/MATHINLINE(\d+)ENDMATHINLINE/g, (match, id) => {
+                return inlineBlocks[parseInt(id)];
+            });
+
+            return html;
+        }
+
+        // --- CHAT LOGIC ---
+        const messagesDiv = document.getElementById('messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const greetingArea = document.getElementById('greeting-area');
+        const historyList = document.getElementById('history-list');
+
+        let currentChatId = null;
+        let chats = [];
+
+        async function fetchHistory() {
+            try {
+                const res = await fetch('/api/history');
+                chats = await res.json();
+                renderHistory();
+            } catch (e) {}
+        }
+
+        function renderHistory() {
+            historyList.innerHTML = '';
+            [...chats].reverse().forEach(chat => {
+                const li = document.createElement('li');
+                const isActive = chat.id === currentChatId;
+                li.className = `group flex items-center gap-3 px-3 py-2 rounded-full cursor-pointer text-sm truncate transition-colors ${isActive ? 'bg-[#333537] text-white' : 'hover:bg-[#28292C] text-gray-300'}`;
+                li.onclick = () => loadChat(chat.id);
+                li.innerHTML = `
+                    <i data-lucide="message-square" class="w-4 h-4 ${isActive ? 'text-white' : 'text-gray-500'}"></i>
+                    <span class="truncate flex-1">${chat.title}</span>
+                    <button onclick="deleteChat(event, '${chat.id}')" class="opacity-0 group-hover:opacity-100 p-1 hover:text-red-400 text-gray-500"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                `;
+                historyList.appendChild(li);
+            });
+            lucide.createIcons();
+        }
+
+        async function deleteChat(e, id) {
+            e.stopPropagation();
+            if(!confirm("Xóa hội thoại này?")) return;
+            await fetch(`/api/history/${id}`, { method: 'DELETE' });
+            chats = chats.filter(c => c.id !== id);
+            if(currentChatId === id) createNewChat();
+            else renderHistory();
+        }
+
+        function createNewChat() {
+            currentChatId = null;
+            greetingArea.classList.remove('hidden');
+            messagesDiv.classList.add('hidden');
+            messagesDiv.innerHTML = '';
+            renderHistory();
+        }
+
+        function loadChat(id) {
+            currentChatId = id;
+            const chat = chats.find(c => c.id === id);
+            if(!chat) return;
+            greetingArea.classList.add('hidden');
+            messagesDiv.classList.remove('hidden');
+            messagesDiv.innerHTML = '';
+            chat.messages.forEach(msg => {
+                if(msg.role === 'user') appendUserMessage(msg.content);
+                else appendBotMessage(msg.content, msg.logs);
+            });
+            renderHistory();
+        }
+
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+            sendBtn.disabled = el.value.trim() === '';
+            sendBtn.className = sendBtn.disabled ? "p-2 text-gray-500 cursor-not-allowed" : "p-2 text-white cursor-pointer hover:bg-[#333537] rounded-full";
+        }
+
+        function handleKeyDown(e) {
+            if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // Đóng settings nếu đang mở
+            settingsPanel.classList.remove('settings-open');
+            settingsPanel.classList.add('settings-closed');
+
+            if (!currentChatId) {
+                currentChatId = Date.now().toString();
+                chats.push({ id: currentChatId, title: text, messages: [] });
+            }
+
+            greetingArea.classList.add('hidden');
+            messagesDiv.classList.remove('hidden');
+            userInput.value = ''; autoResize(userInput);
+            sendBtn.disabled = true;
+
+            appendUserMessage(text);
+            
+            const botMsgId = Date.now();
+            const { logContainer, contentContainer } = createBotMessageSkeleton(botMsgId);
+
+            try {
+                // GỬI KÈM CONFIG
+                const response = await fetch('/api/chat-stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: text,
+                        chat_id: currentChatId,
+                        config: {
+                            max_queries: qRange.value,
+                            results_per_query: rRange.value
+                        }
+                    })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        try {
+                            const data = JSON.parse(line);
+                            if (data.type === 'log') {
+                                const logEntry = document.createElement('div');
+                                logEntry.className = "process-step active text-xs font-mono";
+                                logEntry.innerHTML = `> ${data.content}`;
+                                logContainer.appendChild(logEntry);
+                                if(logContainer.children.length > 1) {
+                                    logContainer.children[logContainer.children.length - 2].classList.replace('active', 'done');
+                                }
+                            } else if (data.type === 'result') {
+                                // Render nội dung an toàn với LaTeX
+                                contentContainer.innerHTML = renderMarkdownWithLatexProtection(data.content);
+                                if (window.MathJax) MathJax.typesetPromise([contentContainer]);
+                            } else if (data.type === 'error') {
+                                contentContainer.innerHTML = `<span class="text-red-400">Error: ${data.content}</span>`;
+                            }
+                        } catch (e) {}
+                    }
+                    document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
+                }
+                await fetchHistory();
+            } catch (err) {
+                contentContainer.innerHTML = `<span class="text-red-400">Mất kết nối server.</span>`;
+            }
+        }
+
+        function appendUserMessage(content) {
+            const div = document.createElement('div');
+            div.className = 'flex justify-end mb-6 animate-fade-in';
+            div.innerHTML = `<div class="bg-[#28292C] text-gray-100 px-5 py-3 rounded-2xl max-w-[85%] rounded-tr-sm">${content.replace(/</g,'&lt;')}</div>`;
+            messagesDiv.appendChild(div);
+        }
+
+        function createBotMessageSkeleton(id) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex gap-4 mb-8 animate-fade-in';
+            wrapper.innerHTML = `
+                <div class="flex-shrink-0 mt-1"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" class="w-8 h-8 animate-pulse"></div>
+                <div class="flex-1 overflow-hidden">
+                    <div id="logs-${id}" class="bg-[#1A1A1C] border border-gray-700/50 rounded-lg p-3 mb-4 text-gray-400">
+                        <div class="text-[10px] uppercase tracking-wider text-gray-500 mb-2 font-bold">Process Logs</div>
+                    </div>
+                    <div id="content-${id}" class="prose max-w-none text-gray-200 leading-7"></div>
+                </div>
+            `;
+            messagesDiv.appendChild(wrapper);
+            return { logContainer: document.getElementById(`logs-${id}`), contentContainer: document.getElementById(`content-${id}`) };
+        }
+
+        function appendBotMessage(content, logs) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex gap-4 mb-8';
+            let logsHtml = '';
+            if (logs && logs.length > 0) {
+                logsHtml = `<div class="bg-[#1A1A1C] border border-gray-700/50 rounded-lg p-3 mb-4 text-gray-400">
+                    <div class="text-[10px] uppercase tracking-wider text-gray-500 mb-2 font-bold">Process Logs</div>
+                    ${logs.map(l => `<div class="process-step done text-xs font-mono">> ${l}</div>`).join('')}
+                </div>`;
+            }
+            
+            // Render nội dung an toàn với LaTeX
+            const renderedHtml = renderMarkdownWithLatexProtection(content);
+            
+            wrapper.innerHTML = `
+                <div class="flex-shrink-0 mt-1"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" class="w-8 h-8"></div>
+                <div class="flex-1 overflow-hidden">
+                    ${logsHtml}
+                    <div class="prose max-w-none text-gray-200 leading-7">${renderedHtml}</div>
+                </div>
+            `;
+            messagesDiv.appendChild(wrapper);
+            if (window.MathJax) MathJax.typesetPromise([wrapper]);
+        }
+        
+        // Init load
+        fetchHistory();
+    </script>
+</body>
+</html>
