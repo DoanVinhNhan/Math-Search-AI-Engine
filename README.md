@@ -36,7 +36,7 @@ project/
 ### Bước 1: Clone hoặc tải source code về máy
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/DoanVinhNhan/Math-Search-AI-Engine
 cd "Math Search Engine"
 ```
 
