@@ -60,7 +60,8 @@ class ContentProcessor:
         if not raw_sample or len(raw_sample) < 5:
             return raw_sample
 
-        prompt_path = os.path.join('PROMPT', 'FIX_LATEX_PROMPT.txt')
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        prompt_path = os.path.join(base_dir, 'PROMPT', 'FIX_LATEX_PROMPT.txt')
 
         # Kiểm tra file tồn tại
         if not os.path.exists(prompt_path):
@@ -204,7 +205,8 @@ class ContentProcessor:
         tagged_context = self._extract_relevant_context_with_pages(pages_data, user_topic)
         if not tagged_context: return None 
 
-        prompt_path = os.path.join('PROMPT', 'PROMPT.txt')
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        prompt_path = os.path.join(base_dir, 'PROMPT', 'PROMPT.txt')
         if not os.path.exists(prompt_path):
              print(f"[ERROR] Prompt file '{prompt_path}' not found.")
              return None

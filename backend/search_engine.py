@@ -77,7 +77,10 @@ class SearchEngine:
         print(f"[INFO] Executing {len(selected_queries)} queries (Limit: {max_queries})...")
         print(f"[INFO] Fetching {results_per_query} links per query...")
 
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+        safe_workers = 1 
+        print(f"[INFO] Force switching to {safe_workers} worker(s) to prevent SSL/Malloc crash on macOS.")
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=safe_workers)
+
         try:
             # Submit tasks với tham số num_results động
             future_to_query = {
