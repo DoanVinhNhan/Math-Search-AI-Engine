@@ -57,7 +57,7 @@ class ContentProcessor:
         Sử dụng Exponential Backoff + Jitter để tránh nghẽn mạng.
         """
         attempt = 0
-        base_wait_time = 5 # Bắt đầu chờ 5 giây
+        base_wait_time = 8 # Bắt đầu chờ 8 giây
 
         while attempt <= max_retries:
             try:
@@ -72,8 +72,8 @@ class ContentProcessor:
                         print(f"[ERROR] Quota exhausted after {max_retries} retries. Skipping.")
                         return None
                     
-                    # Tính thời gian chờ: (5 * 2^attempt) + random(1-3s)
-                    # VD: Lần 1: ~6s, Lần 2: ~11s, Lần 3: ~21s...
+                    # Tính thời gian chờ: (8 * 2^attempt) + random(1-3s)
+                    # VD: Lần 1: ~9s, Lần 2: ~18s, Lần 3: ~34s...
                     wait_time = (base_wait_time * (2 ** (attempt - 1))) + random.uniform(1, 3)
                     print(f"[WARN] Quota hit (429). Retrying in {wait_time:.1f}s (Attempt {attempt}/{max_retries})...")
                     time.sleep(wait_time)

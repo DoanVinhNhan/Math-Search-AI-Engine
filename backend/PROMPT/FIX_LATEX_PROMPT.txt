@@ -9,7 +9,7 @@ Nhiệm vụ của bạn là nhận vào một chuỗi văn bản chứa nội d
 1. **Nhận diện**: Phân biệt rạch ròi giữa "Văn bản thường" (Natural Language) và "Biểu thức toán học" (Math Expressions).
 2. **Sửa lỗi & Chuẩn hóa**:
 - Chuyển đổi các ký hiệu thô sang LaTeX (VD: `x^2` -> `$x^2$`, `int` -> `$\int$`).
-- Sửa lỗi OCR thường gặp (VD: `x2` khi ngữ cảnh là bình phương -> `$x^2$`, `A=` -> `$A=$`).
+- Sửa lỗi OCR thường gặp (VD: `x2` khi ngữ cảnh là bình phương -> `$x^2$`, `A=` -> `$A=$`. VD: 'frac12' -> $\frac{1}{2}$).
 - Sử dụng đúng môi trường cho ma trận (dùng `pmatrix` hoặc `bmatrix`), hệ phương trình (`cases`).
 - Đảm bảo các hàm chuẩn phải có dấu gạch chéo ngược (VD: `\sin`, `\cos`, `\ln`, `\lim`).
 3. **Đóng gói**:
