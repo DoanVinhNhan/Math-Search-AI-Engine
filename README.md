@@ -87,26 +87,26 @@ GOOGLE_CSE_ID=your_custom_search_engine_id_here
 1. Truy cập: Google Programmable Search Engine
 2. Nhấn nút Add (Thêm) để tạo công cụ mới.
 3. Điền thông tin:
- - Name: Đặt tên bất kỳ (VD: MathSearch).
- - What to search: Chọn Search the entire web (Tìm kiếm toàn bộ web).
+    - Name: Đặt tên bất kỳ (VD: MathSearch).
+    - What to search: Chọn Search the entire web (Tìm kiếm toàn bộ web).
 5. Nhấn Create, sau đó copy ID.
 6. Copy mã này dán vào dòng GOOGLE_CSE_ID trong file .env.
 #### Bước 3: Lấy GOOGLE_API_KEY và kích hoạt Custom Search API
 1. Truy cập: Google Cloud Console
 2. Ở góc trên bên trái, nhấn vào danh sách Project và chọn đúng Project bạn đã tạo ở Bước 1:
 3. Kích hoạt thư viện Search:
- - Vào menu bên trái > APIs & Services > Library.
- - Tìm từ khóa Custom Search API.
- - Nhấn vào kết quả và chọn Enable (Kích hoạt).
+    - Vào menu bên trái > APIs & Services > Library.
+    - Tìm từ khóa Custom Search API.
+    - Nhấn vào kết quả và chọn Enable (Kích hoạt).
 4. Tạo API Key:
- - Vào menu APIs & Services > Credentials.
- - Nhấn + CREATE CREDENTIALS > Chọn API key.
- - Copy key này dán vào dòng GOOGLE_API_KEY trong file .env.
+    - Vào menu APIs & Services > Credentials.
+    - Nhấn + CREATE CREDENTIALS > Chọn API key.
+    - Copy key này dán vào dòng GOOGLE_API_KEY trong file .env.
 5. Cấu hình giới hạn (API Restrictions):
- - Tại danh sách API Keys, nhấn vào tên key vừa tạo (hoặc biểu tượng cây bút) để chỉnh sửa.
- - Tại mục API restrictions, chọn Restrict key.
- - Trong menu thả xuống, tích chọn Generative Language API và Custom Search API.
- - Nhấn Save.
+    - Tại danh sách API Keys, nhấn vào tên key vừa tạo (hoặc biểu tượng cây bút) để chỉnh sửa.
+    - Tại mục API restrictions, chọn Restrict key.
+    - Trong menu thả xuống, tích chọn Generative Language API và Custom Search API.
+    - Nhấn Save.
 
 ## 5. Cách sử dụng
 
