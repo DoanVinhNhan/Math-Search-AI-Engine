@@ -77,28 +77,36 @@ GOOGLE_CSE_ID=your_custom_search_engine_id_here
 
 ### Chi tiết cách lấy API Key:
 
-#### A. Lấy GEMINI_API_KEY (Miễn phí)
-
-1. Truy cập: [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Nhấn **Create API key**
-3. Copy chuỗi ký tự và dán vào dòng `GEMINI_API_KEY` trong file `.env`
-
-#### B. Lấy GOOGLE_API_KEY (Google Cloud Platform)
-
-1. Truy cập: [Google Cloud Console](https://console.cloud.google.com/)
-2. Tạo một Project mới
-3. Vào mục **APIs & Services** > **Library**
-4. Tìm và **Enable** `Custom Search API`
-5. Vào **APIs & Services** > **Credentials** > **Create Credentials** > **API key**
-6. Copy key này vào dòng `GOOGLE_API_KEY`
-
-#### C. Lấy GOOGLE_CSE_ID (Programmable Search Engine)
-
-1. Truy cập: [Programmable Search Engine](https://programmablesearchengine.google.com/)
-2. Nhấn **Add** để tạo công cụ tìm kiếm mới
-3. Đặt tên bất kỳ. Tại phần **What to search**, chọn **Search the entire web** (Tìm kiếm toàn bộ web)
-4. Sau khi tạo xong, tại trang **Overview**, copy đoạn mã **Search engine ID** (có dạng `0123456789...:abcde`)
-5. Dán vào dòng `GOOGLE_CSE_ID`
+#### Bước 1: Tạo Project và lấy GEMINI_API_KEY (Google AI Studio)
+1. Truy cập: Google AI Studio - API Key
+2. Nhấn vào nút Create API key.
+3. Chọn Create project.
+4. Tạo API key với project vừa tạo.
+4. Hệ thống sẽ tạo key, hãy copy chuỗi ký tự này và dán vào dòng GEMINI_API_KEY trong file .env.
+#### Bước 2: Tạo GOOGLE_CSE_ID (Programmable Search Engine)
+1. Truy cập: Google Programmable Search Engine
+2. Nhấn nút Add (Thêm) để tạo công cụ mới.
+3. Điền thông tin:
+ - Name: Đặt tên bất kỳ (VD: MathSearch).
+ - What to search: Chọn Search the entire web (Tìm kiếm toàn bộ web).
+5. Nhấn Create, sau đó copy ID.
+6. Copy mã này dán vào dòng GOOGLE_CSE_ID trong file .env.
+#### Bước 3: Lấy GOOGLE_API_KEY và kích hoạt Custom Search API
+1. Truy cập: Google Cloud Console
+2. Ở góc trên bên trái, nhấn vào danh sách Project và chọn đúng Project bạn đã tạo ở Bước 1:
+3. Kích hoạt thư viện Search:
+ - Vào menu bên trái > APIs & Services > Library.
+ - Tìm từ khóa Custom Search API.
+ - Nhấn vào kết quả và chọn Enable (Kích hoạt).
+4. Tạo API Key:
+ - Vào menu APIs & Services > Credentials.
+ - Nhấn + CREATE CREDENTIALS > Chọn API key.
+ - Copy key này dán vào dòng GOOGLE_API_KEY trong file .env.
+5. Cấu hình giới hạn (API Restrictions):
+ - Tại danh sách API Keys, nhấn vào tên key vừa tạo (hoặc biểu tượng cây bút) để chỉnh sửa.
+ - Tại mục API restrictions, chọn Restrict key.
+ - Trong menu thả xuống, tích chọn Generative Language API và Custom Search API.
+ - Nhấn Save.
 
 ## 5. Cách sử dụng
 
