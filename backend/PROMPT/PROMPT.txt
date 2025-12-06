@@ -5,7 +5,7 @@ Nhiệm vụ của bạn là lọc ra những tài liệu bài tập chất lư�
 # THÔNG TIN ĐẦU VÀO
 - Chủ đề người dùng cần: "{user_topic}"
 - Độ khó yêu cầu: "{difficulty}" 
-    *(Lưu ý: Level 1 = Cơ bản/Nhận biết; Level 2 = Vận dụng/Đề thi HK; Level 3 = Vận dụng cao/HSG/Nghiên cứu)*
+    *(Lưu ý: Level 1 = Cơ bản/Nhận biết; Level 2 = Vận dụng; Level 3 = Vận dụng cao)*
 - Loại định dạng: {doc_type}
 
 # NỘI DUNG TÀI LIỆU CẦN THẨM ĐỊNH (Trích đoạn):
