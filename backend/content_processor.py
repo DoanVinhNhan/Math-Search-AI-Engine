@@ -299,11 +299,16 @@ class ContentProcessor:
             print(f"[THREAD ERROR] Error processing {link}: {e}")
             return None
 
-    def process_links(self, links, topic, difficulty):
+    def process_links_stream(self, links, topic, difficulty):
+        """
+        Generator version: Yields progress updates to the app in real-time.
+        """
         results = []
-        max_workers = 5 
+        max_workers = 5
+        total_links = len(links)
+        completed_count = 0
         
-        print(f"[INFO] Verifying {len(links)} links using {max_workers} parallel workers...")
+        print(f"[INFO] Verifying {total_links} links using {max_workers} parallel workers...")
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_url = {
@@ -313,6 +318,8 @@ class ContentProcessor:
             
             for future in as_completed(future_to_url):
                 url = future_to_url[future]
+                completed_count += 1
+                
                 try:
                     data = future.result()
                     if data:
@@ -320,6 +327,26 @@ class ContentProcessor:
                         results.append(data)
                 except Exception as exc:
                     print(f"[ERROR] {url} generated an exception: {exc}")
+                
+                # YIELD PROGRESS: Return current state
+                yield {
+                    "type": "progress_update",
+                    "current": completed_count,
+                    "total": total_links,
+                    "found": len(results)
+                }
         
+        # After processing all links, sort and return final results
         results.sort(key=lambda x: x['score'], reverse=True)
+        yield {
+            "type": "final_result",
+            "data": results
+        }
+    
+    def process_links(self, links, topic, difficulty):
+        """Legacy method kept for backward compatibility - delegates to streaming version"""
+        results = []
+        for update in self.process_links_stream(links, topic, difficulty):
+            if update["type"] == "final_result":
+                results = update["data"]
         return results

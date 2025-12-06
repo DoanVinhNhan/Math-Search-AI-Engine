@@ -351,7 +351,7 @@
             appendUserMessage(text);
             
             const botMsgId = Date.now();
-            const { logContainer, contentContainer } = createBotMessageSkeleton(botMsgId);
+            const { logContainer, contentContainer, progressWrapper, progressBar, progressText, foundCount } = createBotMessageSkeleton(botMsgId);
 
             try {
                 // GỬI KÈM CONFIG
@@ -382,7 +382,30 @@
                         if (!line.trim()) continue;
                         try {
                             const data = JSON.parse(line);
-                            if (data.type === 'log') {
+                            
+                            // PROGRESS BAR LOGIC
+                            if (data.type === 'progress') {
+                                // Show progress bar if not visible
+                                if (progressWrapper.classList.contains('hidden')) {
+                                    progressWrapper.classList.remove('hidden');
+                                }
+                                
+                                // Calculate percentage
+                                const percent = Math.round((data.current / data.total) * 100);
+                                
+                                // Update UI
+                                progressBar.style.width = `${percent}%`;
+                                progressText.innerText = `${data.current}/${data.total}`;
+                                foundCount.innerText = data.found;
+                                
+                                // Change bar color to green when complete
+                                if (data.current === data.total) {
+                                    progressBar.classList.remove('bg-blue-500');
+                                    progressBar.classList.add('bg-green-500');
+                                }
+                            }
+                            // EXISTING LOGIC
+                            else if (data.type === 'log') {
                                 const logEntry = document.createElement('div');
                                 logEntry.className = "process-step active text-xs font-mono";
                                 logEntry.innerHTML = `> ${data.content}`;
@@ -423,11 +446,34 @@
                     <div id="logs-${id}" class="bg-[#1A1A1C] border border-gray-700/50 rounded-lg p-3 mb-4 text-gray-400">
                         <div class="text-[10px] uppercase tracking-wider text-gray-500 mb-2 font-bold">Process Logs</div>
                     </div>
+                    
+                    <!-- PROGRESS BAR SECTION -->
+                    <div id="progress-wrapper-${id}" class="bg-[#1A1A1C] border border-gray-700/50 rounded-lg p-3 mb-4 hidden">
+                        <div class="flex justify-between text-xs text-gray-400 mb-1">
+                            <span>Đang thẩm định tài liệu...</span>
+                            <span id="progress-text-${id}">0/0</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-1.5">
+                            <div id="progress-bar-${id}" class="bg-blue-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="text-[10px] text-gray-500 mt-2 text-right">
+                            Đã tìm thấy: <span id="found-count-${id}" class="text-green-400 font-bold">0</span> tài liệu phù hợp
+                        </div>
+                    </div>
+                    <!-- END PROGRESS BAR SECTION -->
+
                     <div id="content-${id}" class="prose max-w-none text-gray-200 leading-7"></div>
                 </div>
             `;
             messagesDiv.appendChild(wrapper);
-            return { logContainer: document.getElementById(`logs-${id}`), contentContainer: document.getElementById(`content-${id}`) };
+            return { 
+                logContainer: document.getElementById(`logs-${id}`), 
+                contentContainer: document.getElementById(`content-${id}`),
+                progressWrapper: document.getElementById(`progress-wrapper-${id}`),
+                progressBar: document.getElementById(`progress-bar-${id}`),
+                progressText: document.getElementById(`progress-text-${id}`),
+                foundCount: document.getElementById(`found-count-${id}`)
+            };
         }
 
         function appendBotMessage(content, logs) {

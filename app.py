@@ -160,8 +160,23 @@ def chat_stream():
             collected_logs.append(log_5)
             yield json.dumps({"type": "log", "content": log_5}) + "\n"
 
-            # --- BƯỚC 4: PROCESS ---
-            valid_results = processor.process_links(links, topic_en, difficulty)
+            # --- BƯỚC 4: PROCESS (STREAMING PROGRESS) ---
+            valid_results = []
+            
+            # Call the new generator function
+            stream_processor = processor.process_links_stream(links, topic_en, difficulty)
+            
+            for update in stream_processor:
+                if update["type"] == "progress_update":
+                    # Send progress event to frontend
+                    yield json.dumps({
+                        "type": "progress", 
+                        "current": update["current"],
+                        "total": update["total"],
+                        "found": update["found"]
+                    }) + "\n"
+                elif update["type"] == "final_result":
+                    valid_results = update["data"]
             
             log_6 = f"Hoàn tất. Lọc được {len(valid_results)} tài liệu phù hợp."
             collected_logs.append(log_6)
