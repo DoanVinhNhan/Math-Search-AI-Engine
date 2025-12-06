@@ -82,14 +82,14 @@ Hãy đánh giá dựa trên tiêu chí sau đây:
 **Thinking Process (Tư duy của AI):**
 1.  *Phân tích nội dung:* Có mục "Bài tập áp dụng".
 2.  *Đánh giá độ khó:* Yêu cầu là "Level 3" (Đề thi/Khó). Nhưng bài tập tìm được là ma trận đường chéo sẵn (nhìn là ra đáp án) -> Đây là Level 1 (Nhận biết).
-3.  *Đối chiếu Rubric:* Rơi vào nhóm **Phạm vi Chấp nhận được (5-7)**. Cụ thể là điểm 6: "Bài tập ở mức cơ bản, dễ hơn so với yêu cầu".
-4.  *Quyết định điểm:* Cho 6 điểm.
+3.  *Đối chiếu Rubric:* Rơi vào nhóm **Phạm vi Chấp nhận được (5-7)**. Cụ thể là điểm 5: "Bài tập ở mức cơ bản, dễ hơn so với yêu cầu".
+4.  *Quyết định điểm:* Cho 5 điểm.
 
 **Output JSON:**
 {
     "is_relevant": true,
     "contains_exercises": true,
-    "score": 6,
+    "score": 5,
     "reason": "Tài liệu có chứa bài tập thực hành nhưng các câu hỏi ở mức độ nhận biết cơ bản (ma trận đường chéo sẵn), quá dễ so với yêu cầu độ khó Vận dụng cao/Đề thi.",
     "page_location": "Trang 5",
     "sample_question": "Tìm trị riêng của ma trận đường chéo $A = \text{diag}(1, 2, 3)$."
