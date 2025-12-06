@@ -67,8 +67,8 @@ Tạo file tên `.env` tại thư mục gốc của dự án và điền nội d
 
 # 1. Google Gemini API (Dùng cho AI xử lý)
 GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_KEYS_GENERATOR_MODEL_ID=gemini-2.0-flash
-GEMINI_CONTENT_PROCESSOR_MODEL_ID=gemini-2.0-flash
+GEMINI_KEYS_GENERATOR_MODEL_ID=gemini-2.5-pro
+GEMINI_CONTENT_PROCESSOR_MODEL_ID=gemini-2.5-flash
 
 # 2. Google Custom Search API (Dùng để search Google)
 GOOGLE_API_KEY=your_google_cloud_api_key_here
@@ -78,13 +78,13 @@ GOOGLE_CSE_ID=your_custom_search_engine_id_here
 ### Chi tiết cách lấy API Key:
 
 #### Bước 1: Tạo Project và lấy GEMINI_API_KEY (Google AI Studio)
-1. Truy cập: Google AI Studio - API Key
+1. Truy cập: [Google AI Studio - API Key](https://aistudio.google.com/api-keys)
 2. Nhấn vào nút Create API key.
 3. Chọn Create project.
 4. Tạo API key với project vừa tạo.
 4. Hệ thống sẽ tạo key, hãy copy chuỗi ký tự này và dán vào dòng GEMINI_API_KEY trong file .env.
 #### Bước 2: Tạo GOOGLE_CSE_ID (Programmable Search Engine)
-1. Truy cập: Google Programmable Search Engine
+1. Truy cập: [Google Programmable Search Engine](https://programmablesearchengine.google.com/)
 2. Nhấn nút Add (Thêm) để tạo công cụ mới.
 3. Điền thông tin:
     - Name: Đặt tên bất kỳ (VD: MathSearch).
@@ -92,7 +92,7 @@ GOOGLE_CSE_ID=your_custom_search_engine_id_here
 5. Nhấn Create, sau đó copy ID.
 6. Copy mã này dán vào dòng GOOGLE_CSE_ID trong file .env.
 #### Bước 3: Lấy GOOGLE_API_KEY và kích hoạt Custom Search API
-1. Truy cập: Google Cloud Console
+1. Truy cập: [Google Cloud Console](https://console.cloud.google.com/)
 2. Ở góc trên bên trái, nhấn vào danh sách Project và chọn đúng Project bạn đã tạo ở Bước 1:
 3. Kích hoạt thư viện Search:
     - Vào menu bên trái > APIs & Services > Library.

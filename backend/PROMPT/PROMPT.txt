@@ -19,13 +19,13 @@ Hãy đánh giá dựa trên tiêu chí sau đây:
     - 3-4: Đúng chủ đề NHƯNG chỉ toàn Lý thuyết (Theory only), Định nghĩa, Định lý. KHÔNG CÓ bài tập để làm.
 
 2. PHẠM VI CHẤP NHẬN ĐƯỢC (5 - 7 điểm):
-    - 5: Có bài tập nhưng là dạng Ví dụ đã giải sẵn (Solved Examples), người dùng không cần tư duy nhiều.
-    - 6: Bài tập ở mức cơ bản (Drill/Basic), dễ hơn so với yêu cầu độ khó "{difficulty}".
-    - 7: Bài tập về nhà (Homework/Worksheet) tiêu chuẩn, khớp với chủ đề.
+    - 5: Bài tập ở mức cơ bản (Drill/Basic), dễ hơn so với yêu cầu độ khó "{difficulty}".
+    - 6: Bài tập về nhà (Homework/Worksheet) tiêu chuẩn, khớp với chủ đề.
+    - 7: Bài tập tiêu chuẩn, khớp với chủ đề kèm theo lời giải hoặc gợi ý
 
 3. PHẠM VI XUẤT SẮC (8 - 10 điểm):
     - 8: Chứa Đề thi thật (Exam/Midterm/Final) hoặc tập hợp câu hỏi ôn tập sát với độ khó yêu cầu.
-    - 9: Tài liệu hệ thống rất tốt, bài tập phân loại từ dễ đến khó, có kèm đáp án (Answer Key) hoặc gợi ý.
+    - 9: Tài liệu hệ thống rất tốt, bài tập phân loại từ dễ đến khó, có kèm đáp án chi tiết hoặc gợi ý (Answer Key).
     - 10: Tài liệu "Vàng" (Rare/High quality). Chứa các bài toán thách thức (Challenge/Olympiad), bài toán thực tế hoặc chứng minh sâu sắc đúng ý đồ người tìm.
 
 # NHIỆM VỤ CỤ THỂ
