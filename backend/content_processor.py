@@ -2,6 +2,7 @@ import io
 import json
 import re
 import time
+import random
 import requests
 import urllib3
 import google.generativeai as genai
@@ -9,6 +10,7 @@ from bs4 import BeautifulSoup
 from pypdf import PdfReader
 from dotenv import load_dotenv
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -45,59 +47,79 @@ class ContentProcessor:
         if text.endswith("```"):
             text = text.rsplit("```", 1)[0]
         
-        # Sửa lỗi phổ biến: LaTeX dùng \ nhưng JSON yêu cầu \\
         text = text.replace("\\", "\\\\") 
-        # Hoàn tác cho các ký tự JSON hợp lệ
         text = text.replace("\\\\n", "\\n").replace("\\\\t", "\\t").replace("\\\\\"", "\\\"")
-        
         return text.strip()
 
+    def _call_gemini_with_retry(self, prompt, max_retries=5):
+        """
+        Hàm wrapper gọi API với cơ chế Retry khi gặp lỗi 429.
+        Sử dụng Exponential Backoff + Jitter để tránh nghẽn mạng.
+        """
+        attempt = 0
+        base_wait_time = 5 # Bắt đầu chờ 5 giây
+
+        while attempt <= max_retries:
+            try:
+                # Gọi API
+                return verifier_model.generate_content(prompt)
+            except Exception as e:
+                error_msg = str(e)
+                # Chỉ retry nếu là lỗi 429 (Resource Exhausted)
+                if "429" in error_msg:
+                    attempt += 1
+                    if attempt > max_retries:
+                        print(f"[ERROR] Quota exhausted after {max_retries} retries. Skipping.")
+                        return None
+                    
+                    # Tính thời gian chờ: (5 * 2^attempt) + random(1-3s)
+                    # VD: Lần 1: ~6s, Lần 2: ~11s, Lần 3: ~21s...
+                    wait_time = (base_wait_time * (2 ** (attempt - 1))) + random.uniform(1, 3)
+                    print(f"[WARN] Quota hit (429). Retrying in {wait_time:.1f}s (Attempt {attempt}/{max_retries})...")
+                    time.sleep(wait_time)
+                else:
+                    # Nếu lỗi khác (400, 500...) thì bỏ qua luôn, không retry
+                    print(f"[AI ERROR] Unrecoverable error: {error_msg}")
+                    return None
+        return None
+
     def _refine_latex_with_ai(self, raw_sample):
-        """
-        Gửi sample_question qua AI một lần nữa để chuẩn hóa LaTeX.
-        Sử dụng prompt từ file FIX_LATEX_PROMPT.txt
-        """
+        """Refine LaTeX logic (Có Retry)"""
         if not raw_sample or len(raw_sample) < 5:
             return raw_sample
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
         prompt_path = os.path.join(base_dir, 'PROMPT', 'FIX_LATEX_PROMPT.txt')
 
-        # Kiểm tra file tồn tại
         if not os.path.exists(prompt_path):
-            print(f"[WARNING] File prompt '{prompt_path}' not found. Skipping LaTeX refinement.")
             return raw_sample
 
         try:
-            # Đọc nội dung file prompt
             with open(prompt_path, "r", encoding="utf-8") as f:
                 prompt_template = f.read()
 
-            # Sử dụng replace thay vì f-string để tránh lỗi với dấu {} của LaTeX/JSON trong prompt
             prompt = prompt_template.replace("{raw_sample_question}", raw_sample)
             
-            # Gọi AI model (dùng flash model cho nhanh)
-            response = verifier_model.generate_content(prompt)
+            # Thay thế lệnh gọi trực tiếp bằng hàm có retry
+            response = self._call_gemini_with_retry(prompt, max_retries=3)
+            
+            if not response: return raw_sample
+
             refined_text = response.text.strip()
             
-            # Xóa markdown wrapper nếu AI lỡ thêm vào (VD: ```latex ... ```)
             if refined_text.startswith("```"):
-                # Bỏ dòng đầu tiên (chứa ```)
                 parts = refined_text.split("\n", 1)
                 if len(parts) > 1:
                     refined_text = parts[1]
-                
-                # Bỏ dòng cuối cùng nếu chứa ```
                 if refined_text.endswith("```"):
                     refined_text = refined_text.rsplit("```", 1)[0]
             
             return refined_text.strip()
-            
-        except Exception as e:
-            print(f"[LATEX REFINE ERROR] Could not refine sample: {e}")
-            return raw_sample # Fallback về text gốc nếu lỗi
-        
+        except Exception:
+            return raw_sample
+
     def _extract_relevant_context_with_pages(self, pages_data, topic_keywords, window_size=800):
+        # ... (Giữ nguyên code cũ)
         if not pages_data: return ""
         
         search_terms = self.signal_keywords + topic_keywords.lower().split()
@@ -155,9 +177,8 @@ class ContentProcessor:
         return final_context
 
     def fetch_content(self, url):
-        # BỘ LỌC RÁC CỨNG (Hard Filter)
+        # ... (Giữ nguyên code cũ tối ưu timeout 8s)
         if any(x in url for x in ["youtube.com", "reddit.com", "tiktok.com", "giphy.com", "tenor.com", "knowyourmeme.com"]):
-            print(f"[INFO] Skipped junk domain: {url}")
             return [], None
 
         headers = {
@@ -166,7 +187,7 @@ class ContentProcessor:
         }
         
         try:
-            response = requests.get(url, headers=headers, timeout=10, verify=False) 
+            response = requests.get(url, headers=headers, timeout=8, verify=False) 
             content_type = response.headers.get('Content-Type', '').lower()
             final_url = response.url.lower()
             pages_data = []
@@ -177,7 +198,7 @@ class ContentProcessor:
                     f = io.BytesIO(response.content)
                     reader = PdfReader(f)
                     if len(reader.pages) > 0:
-                        for i in range(min(15, len(reader.pages))): 
+                        for i in range(min(10, len(reader.pages))): 
                             txt = reader.pages[i].extract_text()
                             if txt:
                                 pages_data.append({"page": i + 1, "text": txt})
@@ -208,7 +229,6 @@ class ContentProcessor:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         prompt_path = os.path.join(base_dir, 'PROMPT', 'PROMPT.txt')
         if not os.path.exists(prompt_path):
-             print(f"[ERROR] Prompt file '{prompt_path}' not found.")
              return None
 
         try:
@@ -222,19 +242,19 @@ class ContentProcessor:
             
             prompt = prompt.replace("{{", "{").replace("}}", "}")
             
-            time.sleep(2) 
+            # --- Thay thế lệnh gọi trực tiếp bằng hàm _call_gemini_with_retry ---
+            # Max retries = 5, nếu mạng lag hoặc hết quota sẽ kiên trì thử lại
+            res = self._call_gemini_with_retry(prompt, max_retries=5)
             
-            res = verifier_model.generate_content(prompt)
+            if not res: return None # Nếu sau 5 lần vẫn lỗi thì đành chịu
+
             raw_text = res.text
             
             parsed_result = None
-            
-            # Thử parse JSON
             try:
                 clean_text = self._clean_json_text(raw_text)
                 parsed_result = json.loads(clean_text)
             except json.JSONDecodeError:
-                # Fallback: Regex tìm JSON
                 match = re.search(r'\{.*\}', raw_text, re.DOTALL)
                 if match:
                     try:
@@ -242,56 +262,64 @@ class ContentProcessor:
                     except:
                         pass
             
-            # --- BƯỚC QUAN TRỌNG: CHUẨN HOÁ LATEX ---
             if parsed_result and parsed_result.get('is_relevant') and parsed_result.get('contains_exercises'):
                 sample = parsed_result.get('sample_question')
                 if sample:
-                    # Gọi thêm 1 API nữa để sửa Latex cho đẹp
                     refined_sample = self._refine_latex_with_ai(sample)
                     parsed_result['sample_question'] = refined_sample
             
             return parsed_result
             
         except Exception as e:
-            error_msg = str(e)
-            if "429" in error_msg:
-                print("[ERROR] Quota exceeded (429). Cooling down for 5s...")
-                time.sleep(5) 
-            elif "404" in error_msg:
-                print(f"[ERROR] Model '{MODEL_ID}' not found.")
-            else:
-                print(f"[ERROR] AI Inference failed: {error_msg}")
+            print(f"[ERROR] Logic error in verify: {e}")
+            return None
+
+    def _process_single_url(self, link, topic, difficulty):
+        try:
+            pages_data, doc_type = self.fetch_content(link)
+            if not pages_data: return None
+            
+            evaluation = self.verify_relevance(pages_data, doc_type, topic, difficulty)
+            
+            if evaluation:
+                score = evaluation.get('score', 0)
+                has_exercises = evaluation.get('contains_exercises', False)
+                reason = evaluation.get('reason', 'N/A')
+                
+                if score >= 5 and has_exercises:
+                    page_loc = evaluation.get('page_location', 'Unknown')
+                    return {
+                        "url": link, "type": doc_type, "score": score,
+                        "page": page_loc, "reason": reason,
+                        "sample": evaluation.get('sample_question', '')
+                    }
+            return None
+            
+        except Exception as e:
+            print(f"[THREAD ERROR] Error processing {link}: {e}")
             return None
 
     def process_links(self, links, topic, difficulty):
         results = []
-        print(f"[INFO] Verifying {len(links)} links...")
+        max_workers = 5 
         
-        for link in links:
-            pages_data, doc_type = self.fetch_content(link)
+        print(f"[INFO] Verifying {len(links)} links using {max_workers} parallel workers...")
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_url = {
+                executor.submit(self._process_single_url, url, topic, difficulty): url 
+                for url in links
+            }
             
-            if pages_data:
-                evaluation = self.verify_relevance(pages_data, doc_type, topic, difficulty)
-                
-                if evaluation:
-                    score = evaluation.get('score', 0)
-                    has_exercises = evaluation.get('contains_exercises', False)
-                    reason = evaluation.get('reason', 'N/A')
-                    
-                    if score >= 5 and has_exercises:
-                        page_loc = evaluation.get('page_location', 'Unknown')
-                        print(f"[MATCH] Score: {score} | Type: {doc_type} | URL: {link}")
-                        
-                        results.append({
-                            "url": link, "type": doc_type, "score": score,
-                            "page": page_loc, "reason": reason,
-                            "sample": evaluation.get('sample_question', '')
-                        })
-                    else:
-                        print(f"[SKIP]  Score: {score} | Reason: {reason} | URL: {link}")
-                else:
-                    pass
-            else:
-                 pass 
-                
+            for future in as_completed(future_to_url):
+                url = future_to_url[future]
+                try:
+                    data = future.result()
+                    if data:
+                        print(f"[MATCH] Score: {data['score']} | {data['type']} | {url}")
+                        results.append(data)
+                except Exception as exc:
+                    print(f"[ERROR] {url} generated an exception: {exc}")
+        
+        results.sort(key=lambda x: x['score'], reverse=True)
         return results
